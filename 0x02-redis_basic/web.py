@@ -1,30 +1,55 @@
 #!/usr/bin/env python3
-"""Implementing an expiring web cache and tracker"""
+"""Module for implementing an expiring web cache and tracker
+"""
 import requests
+import time
 from functools import wraps
-from time import time
 
-cache = {}
+CACHE_EXPIRATION_TIME = 10  # seconds
+CACHE = {}
 
-def cached(func):
-    @wraps(func)
-    def wrapper(url):
-        cache_key = f"count:{url}"
-        now = time()
-        if cache_key in cache and cache[cache_key]["expire"] > now:
-            return cache[cache_key]["content"]
+
+def cache(fn):
+    """_summary_
+
+    Args:
+        fn (function): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    @wraps(fn)
+    def wrapped(*args, **kwargs):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
+        url = args[0]
+        if url in CACHE and CACHE[url]["timestamp"] + CACHE_EXPIRATION_TIME > \
+                time.time():
+            CACHE[url]["count"] += 1
+            return CACHE[url]["content"]
         else:
-            content = func(url)
-            cache[cache_key] = {"content": content, "expire": now + 10}
+            content = fn(*args, **kwargs)
+            CACHE[url] = {"content": content,
+                          "timestamp": time.time(), "count": 1}
             return content
-    return wrapper
+    return wrapped
 
-@cached
+
+@cache
 def get_page(url: str) -> str:
-    print(f"Fetching content for {url}")
-    response = requests.get(url)
-    return response.text
+    """_summary_
 
-# Example usage
-print(get_page("http://slowwly.robertomurray.co.uk/delay/3000/url/http://www.example.com"))
-print(get_page("http://slowwly.robertomurray.co.uk/delay/3000/url/http://www.example.com"))
+    Args:
+        url (str): _description_
+
+    Returns:
+        str: _description_
+    """
+    global count
+    # increment count
+    count += 1
+    response = requests.get(url)
+    return response.content.decode('utf-8')
