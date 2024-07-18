@@ -185,7 +185,7 @@ class Cache:
         return self.get(key, lambda x: x.decode("utf-8"))
 
     def get_int(self, key: str) -> Optional[int]:
-        """Method to get an integer from Redis.
+        """Method to get an integer from Redis
 
         Args:
             key: The key used to store the integer in Redis.
